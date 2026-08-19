@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile — Apex Bank{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+
+
+<!-- Toasts -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+  {% for message in messages %}
+  <div class="toast align-items-center border-0 show
+    {% if message.tags == 'error' %}bg-danger{% else %}bg-success{% endif %}"
+    role="alert" data-bs-autohide="true" data-bs-delay="3500">
+    <div class="d-flex">
+      <div class="toast-body text-white fw-semibold">
+        <i class="ti ti-{% if message.tags == 'error' %}alert-circle{% else %}circle-check{% endif %} me-2"></i>
+        {{ message }}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="profile-page">
+  <div class="container">
+
+    <!-- No account warning -->
+    {% if not account %}
+    <div class="no-account-banner mb-4">
+      <i class="ti ti-alert-triangle" style="font-size:22px;flex-shrink:0"></i>
+      No savings account found linked to your profile.
+      Please contact support or open an account.
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+
+      <!-- ── LEFT ── -->
+      <div class="col-lg-4">
+
+        <!-- Avatar + Name -->
+        <div class="glass-card text-center mb-4">
+          <div class="avatar-wrap">
+            {% if account and account.photo %}
+              <img src="{{ account.photo.url }}" alt="Photo" id="avatar-preview">
+            {% else %}
+              <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=0ea5e9&color=fff&size=110"
+                   alt="Avatar" id="avatar-preview">
+            {% endif %}
+            <label for="photo-upload" class="avatar-edit-btn" title="Change photo">
+              <i class="ti ti-camera"></i>
+            </label>
+          </div>
+
+          <form method="POST" enctype="multipart/form-data" id="photo-form">
+            {% csrf_token %}
+            <input type="hidden" name="upload_photo" value="1">
+            <input type="file" id="photo-upload" name="photo" accept="image/*" style="display:none">
+          </form>
+
+          <div class="profile-name">
+            {% if account %}{{ account.full_name|title }}{% else %}{{ request.user.username|title }}{% endif %}
+          </div>
+          <div class="profile-email mb-2">
+            {% if account %}{{ account.email }}{% else %}{{ request.user.email }}{% endif %}
+          </div>
+          <span class="acc-badge">
+            <i class="ti ti-building-bank"></i> Savings Account
+          </span>
+        </div>
+
+
+      <!-- Balance -->
+      <div class="balance-card mb-4">
+        <div class="balance-label">
+            Available Balance
+          </div>
+          <div class="balance-amount" id="balanceAmount">
+            {% if account %}₹{{ account.balance|floatformat:2 }}{% else %}₹0.00{% endif %}
+          </div>
+        <div class="balance-acno">
+          <i class="ti ti-credit-card me-1"></i>
+          {% if account %}
+            •••• •••• •••• {{ account.account_number|slice:"-4:" }}
+          {% else %}
+            No Account
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- MPIN prompt modal for revealing balance -->
+      <div class="modal fade" id="balanceMpinModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h6 class="modal-title">Enter MPIN to view balance</h6>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <input type="tel" id="balanceMpinInput" class="form-control text-center" maxlength="6" inputmode="numeric" placeholder="••••••"
+              style="font-size:20px;letter-spacing:6px;">
+              <div id="balanceMpinErr" class="text-danger small mt-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary btn-sm rounded-pill"
+                      data-bs-dismiss="modal">Cancel</button>
+              <button class="btn-modal-submit" id="balanceMpinSubmit">Verify</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+         <!-- Quick Actions -->
+        <div class="sec-heading">Quick Actions</div>
+        <div class="row g-2">
+          <div class="col-4">
+            <button class="action-btn w-100" data-bs-toggle="modal" data-bs-target="#depositModal">
+              <i class="ti ti-arrow-down-circle"></i>Deposit
+            </button>
+          </div>
+          <div class="col-4">
+            <button class="action-btn w-100" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+              <i class="ti ti-arrow-up-circle"></i>Withdraw
+            </button>
+          </div>
+          <div class="col-4">
+            <a href="{% url 'transfer' %}" class="w-100">
+              <button class="action-btn w-100"><i class="ti ti-transfer"></i>Transfer</button>
+            </a>
+          </div>
+          <div class="col-4">
+            <a href="{% url 'scan_to_pay' %}" class="w-100">
+              <button class="action-btn w-100"><i class="ti ti-scan"></i>Scan & Pay</button>
+            </a>
+          </div>
+          <div class="col-4">
+            <a href="{% url 'transaction_history' %}" class="w-100">
+              <button class="action-btn w-100"><i class="ti ti-file-download"></i>Statement</button>
+            </a>
+          </div>
+          <div class="col-4">
+            <a href="{% url 'support' %}" class="w-100">
+              <button class="action-btn w-100"><i class="ti ti-file-download"></i>Support</button>
+            </a>
+          </div>
+        </div>
+        
+            
+
+
+        <!-- QR Code -->
+      <div class="sec-heading mt-4">Your Account QR Code</div>
+      <div class="glass-card text-center" style="padding: 20px;">
+        {% if account %}
+          <img src="{% url 'account_qr_code' %}"
+              alt="Account QR Code"
+              style="width: 180px; height: 180px; border-radius: 12px; background: #fff; padding: 10px;">
+          <p style="color: rgba(255,255,255,.5); font-size: 12px; margin-top: 12px; margin-bottom: 14px;">
+            Share this QR code to receive payments instantly
+          </p>
+          <a href="{% url 'account_qr_code' %}?download=1" class="btn-pin-change" style="text-decoration:none; display:inline-block;">
+            <i class="ti ti-download me-1"></i>Download QR Code
+          </a>
+        {% else %}
+          <p style="color: rgba(255,255,255,.5); font-size: 13px;">Open an account to get your QR code.</p>
+        {% endif %}
+      </div>
+
+      </div>
+
+      <!-- ── RIGHT ── -->
+      <div class="col-lg-8">
+
+        <!-- Personal Info -->
+        <div class="glass-card mb-4">
+          <div class="sec-heading">Personal Information</div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-user"></i></div>
+            <div>
+              <div class="info-label">Full Name</div>
+              <div class="info-value">{% if account %}{{ account.full_name|title }}{% else %}—{% endif %}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-mail"></i></div>
+            <div>
+              <div class="info-label">Email Address</div>
+              <div class="info-value">{% if account %}{{ account.email }}{% else %}{{ request.user.email }}{% endif %}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-phone"></i></div>
+            <div>
+              <div class="info-label">Mobile Number</div>
+              <div class="info-value">{% if account %}{{ account.mobile_number }}{% else %}—{% endif %}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-map-pin"></i></div>
+            <div>
+              <div class="info-label">Address</div>
+              <div class="info-value">{% if account %}{{ account.address }}{% else %}—{% endif %}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-id-badge"></i></div>
+            <div>
+              <div class="info-label">Customer ID</div>
+              <div class="info-value">{% if account %}{{ account.customer_id }}{% else %}—{% endif %}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-credit-card"></i></div>
+            <div>
+              <div class="info-label">Account Number</div>
+              <div class="info-value">{% if account %}{{ account.account_number }}{% else %}—{% endif %}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon"><i class="ti ti-building"></i></div>
+            <div>
+              <div class="info-label">Branch / IFSC</div>
+              <div class="info-value">
+                {% if account %}{{ account.branch_name }} — {{ account.ifsc_code }}{% else %}—{% endif %}
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Security -->
+        <div class="glass-card">
+          <div class="sec-heading">Security & PIN</div>
+
+          <div class="pin-box mb-3">
+            <div>
+              <div class="pin-label">Login Password</div>
+              <div class="pin-dots">••••••</div>
+            </div>
+            <button class="btn-pin-change"
+                    data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+              <i class="ti ti-lock me-1"></i>Change
+            </button>
+          </div>
+
+          <div class="pin-box mb-3">
+            <div>
+              <div class="pin-label">MPIN (Mobile PIN)</div>
+              <div class="pin-dots">
+                {% if account and account.mpin %}••••{% else %}
+                <span style="font-size:12px;color:rgba(255,255,255,.35)">Not Set</span>
+                {% endif %}
+              </div>
+            </div>
+            <button class="btn-pin-change"
+                    data-bs-toggle="modal" data-bs-target="#changeMpinModal">
+              <i class="ti ti-lock me-1"></i>
+              {% if account and account.mpin %}Change{% else %}Set{% endif %}
+            </button>
+          </div>
+
+          <div class="pin-box">
+            <div>
+              <div class="pin-label">TPIN (Transaction PIN)</div>
+              <div class="pin-dots">
+                {% if account and account.tpin %}••••{% else %}
+                <span style="font-size:12px;color:rgba(255,255,255,.35)">Not Set</span>
+                {% endif %}
+              </div>
+            </div>
+            <button class="btn-pin-change"
+                    data-bs-toggle="modal" data-bs-target="#changeTpinModal">
+              <i class="ti ti-lock me-1"></i>
+              {% if account and account.tpin %}Change{% else %}Set{% endif %}
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     Modal: Change Password  (OTP flow)
+══════════════════════════════════════════ -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-lock me-2 text-info"></i>Change Password</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Step 1: enter new password -->
+        <div id="pwStep1">
+          <div class="mb-3">
+            <label class="form-label">Current Password</label>
+            <input type="password" id="pw_old" class="form-control" placeholder="Enter current password">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <input type="password" id="pw_new" class="form-control" placeholder="Min 6 characters">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" id="pw_confirm" class="form-control" placeholder="Repeat new password">
+          </div>
+          <div id="pwErr1" class="text-danger small d-none"></div>
+        </div>
+
+        <!-- Step 2: enter OTP (hidden initially) -->
+        <div id="pwStep2" class="d-none">
+          <p class="text-muted small mb-3">An OTP has been sent to <strong id="pwMaskedEmail"></strong>. Enter it below to confirm.</p>
+          <div class="mb-3">
+            <label class="form-label">Enter OTP</label>
+            <input type="text" id="pw_otp" class="form-control" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+          </div>
+          <div id="pwErr2" class="text-danger small d-none"></div>
+          <span class="small text-muted" id="pwTimerTxt">Resend in <strong id="pwTimerCount">30</strong>s</span>
+          <button class="btn btn-link btn-sm p-0 text-info d-none" id="pwResendBtn">Resend OTP</button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-modal-submit" id="pwStep1Btn">Send OTP</button>
+        <button class="btn-modal-submit d-none" id="pwStep2Btn">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     Modal: Change MPIN  (OTP flow)
+══════════════════════════════════════════ -->
+<div class="modal fade" id="changeMpinModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="ti ti-device-mobile me-2 text-info"></i>
+          {% if account and account.mpin %}Change{% else %}Set{% endif %} MPIN
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <div id="mpinStep1">
+          <div class="mb-3">
+            <label class="form-label">New MPIN (4–6 digits)</label>
+            <input type="password" id="mpin_new" class="form-control" placeholder="Enter MPIN" maxlength="6" inputmode="numeric">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirm MPIN</label>
+            <input type="password" id="mpin_confirm" class="form-control" placeholder="Re-enter MPIN" maxlength="6" inputmode="numeric">
+          </div>
+          <div id="mpinErr1" class="text-danger small d-none"></div>
+        </div>
+
+        <div id="mpinStep2" class="d-none">
+          <p class="text-muted small mb-3">An OTP has been sent to <strong id="mpinMaskedEmail"></strong>.</p>
+          <div class="mb-3">
+            <label class="form-label">Enter OTP</label>
+            <input type="text" id="mpin_otp" class="form-control" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+          </div>
+          <div id="mpinErr2" class="text-danger small d-none"></div>
+          <span class="small text-muted" id="mpinTimerTxt">Resend in <strong id="mpinTimerCount">30</strong>s</span>
+          <button class="btn btn-link btn-sm p-0 text-info d-none" id="mpinResendBtn">Resend OTP</button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-modal-submit" id="mpinStep1Btn">Send OTP</button>
+        <button class="btn-modal-submit d-none" id="mpinStep2Btn">Save MPIN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     Modal: Change TPIN  (OTP flow)
+══════════════════════════════════════════ -->
+<div class="modal fade" id="changeTpinModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="ti ti-shield-lock me-2 text-info"></i>
+          {% if account and account.tpin %}Change{% else %}Set{% endif %} TPIN
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <div id="tpinStep1">
+          <div class="mb-3">
+            <label class="form-label">New TPIN (4–6 digits)</label>
+            <input type="password" id="tpin_new" class="form-control" placeholder="Enter TPIN" maxlength="6" inputmode="numeric">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirm TPIN</label>
+            <input type="password" id="tpin_confirm" class="form-control" placeholder="Re-enter TPIN" maxlength="6" inputmode="numeric">
+          </div>
+          <div id="tpinErr1" class="text-danger small d-none"></div>
+        </div>
+
+        <div id="tpinStep2" class="d-none">
+          <p class="text-muted small mb-3">An OTP has been sent to <strong id="tpinMaskedEmail"></strong>.</p>
+          <div class="mb-3">
+            <label class="form-label">Enter OTP</label>
+            <input type="text" id="tpin_otp" class="form-control" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+          </div>
+          <div id="tpinErr2" class="text-danger small d-none"></div>
+          <span class="small text-muted" id="tpinTimerTxt">Resend in <strong id="tpinTimerCount">30</strong>s</span>
+          <button class="btn btn-link btn-sm p-0 text-info d-none" id="tpinResendBtn">Resend OTP</button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn-modal-submit" id="tpinStep1Btn">Send OTP</button>
+        <button class="btn-modal-submit d-none" id="tpinStep2Btn">Save TPIN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

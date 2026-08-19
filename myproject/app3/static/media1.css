@@ -1,0 +1,181 @@
+/* media1.css — Deposit & Withdraw popup theme for Apex Bank
+   Layers on top of Bootstrap 5; keep style1.css for site-wide rules. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@500&display=swap');
+
+:root {
+  --apex-navy: #0B2545;
+  --apex-navy-deep: #081B33;
+  --apex-teal: #13746A;       /* deposit accent — money coming in */
+  --apex-amber: #B8742E;      /* withdraw accent — money going out */
+  --apex-gold: #D4A24C;
+  --apex-bg: #F7F9FC;
+  --apex-border: #E3E8EF;
+  --apex-text: #14233B;
+  --apex-text-muted: #5C6B7A;
+  --apex-error: #D7263D;
+  --apex-radius: 16px;
+}
+
+/* Smoother entrance than Bootstrap's default fade — shared by both modals */
+.apex-modal-wrap .modal-dialog {
+  transform: scale(.92) translateY(12px);
+  transition: transform .28s cubic-bezier(.32, .72, 0, 1), opacity .2s ease;
+}
+.apex-modal-wrap.show .modal-dialog {
+  transform: scale(1) translateY(0);
+}
+
+.apex-modal-content {
+  border: none;
+  border-radius: var(--apex-radius);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -16px rgba(8, 27, 51, .35);
+  font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  color: var(--apex-text);
+}
+
+.apex-modal-header {
+  background: linear-gradient(135deg, var(--apex-navy) 0%, var(--apex-navy-deep) 100%);
+  color: #fff;
+  border: none;
+  padding: 1.5rem 1.5rem 1.25rem;
+  gap: .9rem;
+  align-items: flex-start;
+}
+.apex-modal-header .btn-close { filter: invert(1) brightness(2); opacity: .8; margin: 0; }
+.apex-modal-header .btn-close:hover { opacity: 1; }
+
+.apex-modal-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(212, 162, 76, .18);
+  color: var(--apex-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+/* Withdraw gets its own icon accent so the two actions read distinctly at a glance */
+.apex-modal-icon-withdraw {
+  background: rgba(184, 116, 46, .18);
+  color: var(--apex-amber);
+}
+
+.modal-title { font-weight: 600; letter-spacing: -.01em; }
+.apex-modal-subtitle { font-size: .82rem; color: rgba(255, 255, 255, .65); }
+
+.apex-modal-body { background: var(--apex-bg); padding: 1.5rem; }
+
+.apex-account-summary {
+  background: #fff;
+  border: 1px solid var(--apex-border);
+  border-radius: 12px;
+  padding: .9rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.apex-account-summary > div { display: flex; flex-direction: column; gap: .15rem; }
+.apex-account-summary > div:last-child { text-align: right; }
+.apex-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--apex-text-muted); }
+.apex-value { font-weight: 600; font-size: .92rem; }
+.apex-mono { font-family: 'Space Mono', monospace; letter-spacing: .03em; }
+
+.apex-field .form-label { font-weight: 500; font-size: .85rem; color: var(--apex-text); }
+.apex-field .input-group-text { background: #fff; border-color: var(--apex-border); color: var(--apex-text-muted); }
+.apex-field .form-control { border-color: var(--apex-border); padding: .6rem .8rem; }
+.apex-field .form-control:focus {
+  border-color: var(--apex-teal);
+  box-shadow: 0 0 0 .2rem rgba(19, 116, 106, .15);
+}
+
+/* Shake on invalid input — e.g. amount over balance, missing MPIN */
+.apex-field.shake { animation: apexShake .4s ease; }
+@keyframes apexShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+.apex-feedback { display: none; font-size: .78rem; margin-top: .3rem; color: var(--apex-error); }
+.apex-field.is-invalid .apex-feedback { display: block; }
+.apex-field.is-invalid .form-control { border-color: var(--apex-error); }
+
+.apex-mpin-toggle, .apex-tpin-toggle { border-color: var(--apex-border); color: var(--apex-text-muted); }
+
+.apex-alert { border-radius: 10px; padding: .7rem .9rem; font-size: .85rem; margin-top: .25rem; }
+.apex-alert-error {
+  background: rgba(215, 38, 61, .08);
+  color: var(--apex-error);
+  border: 1px solid rgba(215, 38, 61, .2);
+}
+
+.apex-modal-footer { border: none; background: var(--apex-bg); padding: 1rem 1.5rem 1.5rem; }
+.apex-modal-footer .btn-light { border: 1px solid var(--apex-border); background: #fff; }
+
+.apex-submit-btn {
+  background: var(--apex-teal);
+  border: none;
+  color: #fff;
+  min-width: 118px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  transition: background .2s ease, transform .15s ease;
+}
+.apex-submit-btn:hover { background: #0f5b53; color: #fff; }
+.apex-submit-btn:active { transform: scale(.97); }
+.apex-submit-btn:disabled { opacity: .85; }
+
+/* Withdraw uses the amber accent instead of teal */
+.apex-submit-btn-withdraw { background: var(--apex-amber); }
+.apex-submit-btn-withdraw:hover { background: #9c6224; color: #fff; }
+
+/* Checkmark pop on success, right before the modal closes */
+.apex-btn-check { animation: apexPop .35s cubic-bezier(.32, 1.6, .4, 1); }
+@keyframes apexPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@media (max-width: 480px) {
+  .apex-account-summary { flex-direction: column; gap: .6rem; }
+  .apex-account-summary > div:last-child { text-align: left; }
+}
+
+/* transaction */
+
+@media (max-width: 575px) {
+  .glass-card { padding: 16px 12px; }
+  .sum-card .s-amount { font-size: 18px; }
+  .tx-bal { display: none; }
+}
+
+/* transfer */
+@media (max-width: 767px) {
+  .glass-card { padding: 20px 14px; }
+  .page-title { font-size: 22px; }
+  .balance-strip .b-amount { font-size: 22px; }
+}
+
+/* pagination */
+
+@media (max-width: 575px) {
+  .pagination-wrap {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .pg-btn {
+    width: 32px; height: 32px;
+    font-size: 12px; border-radius: 8px;
+  }
+}

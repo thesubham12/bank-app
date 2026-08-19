@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Transaction History — Apex Bank{% endblock %}
+{% block content %}
+
+<div class="history-page">
+  <div class="container">
+
+    <div class="page-title"><i class="ti ti-history me-2" style="color:#38bdf8"></i>Transaction History</div>
+    <div class="page-sub">{{ account.full_name }} — {{ account.account_number }}</div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="sum-card deposit">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="s-label">Total Deposited</div>
+              <div class="s-amount">₹{{ total_deposit|floatformat:2 }}</div>
+            </div>
+            <i class="ti ti-arrow-down-circle s-icon"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="sum-card withdraw">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="s-label">Total Withdrawn</div>
+              <div class="s-amount">₹{{ total_withdraw|floatformat:2 }}</div>
+            </div>
+            <i class="ti ti-arrow-up-circle s-icon"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="sum-card sent">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="s-label">Total Sent</div>
+              <div class="s-amount">₹{{ total_sent|floatformat:2 }}</div>
+            </div>
+            <i class="ti ti-send s-icon"></i>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="sum-card received">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="s-label">Total Received</div>
+              <div class="s-amount">₹{{ total_received|floatformat:2 }}</div>
+            </div>
+            <i class="ti ti-arrow-down-left-circle s-icon"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction List -->
+    <div class="glass-card" id="tx-content">
+
+      <!-- Header row with title + download button -->
+      <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+        <div class="sec-hd mb-0">
+          <i class="ti ti-list me-1" style="color:#38bdf8"></i>All Transactions
+        </div>
+        <button class="stmt-dl-btn" id="openStmtModal">
+          <i class="ti ti-file-download"></i> Download Statement
+        </button>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs">
+        <a href="?type=all"               class="ftab {% if filter_type == 'all' %}active{% endif %}">All</a>
+        <a href="?type=deposit"           class="ftab {% if filter_type == 'deposit' %}active{% endif %}">
+          <i class="ti ti-arrow-down-circle me-1"></i>Deposit</a>
+        <a href="?type=withdraw"          class="ftab {% if filter_type == 'withdraw' %}active{% endif %}">
+          <i class="ti ti-arrow-up-circle me-1"></i>Withdraw</a>
+        <a href="?type=transfer_sent"     class="ftab {% if filter_type == 'transfer_sent' %}active{% endif %}">
+          <i class="ti ti-send me-1"></i>Sent</a>
+        <a href="?type=transfer_received" class="ftab {% if filter_type == 'transfer_received' %}active{% endif %}">
+          <i class="ti ti-arrow-down-left-circle me-1"></i>Received</a>
+      </div>
+
+      {% if transactions %}
+        {% for tx in transactions %}
+        <div class="tx-row">
+
+          <div class="tx-icon {{ tx.transaction_type }}">
+            {% if tx.transaction_type == 'deposit' %}
+              <i class="ti ti-arrow-down-circle"></i>
+            {% elif tx.transaction_type == 'withdraw' %}
+              <i class="ti ti-arrow-up-circle"></i>
+            {% elif tx.transaction_type == 'transfer_sent' %}
+              <i class="ti ti-send"></i>
+            {% else %}
+              <i class="ti ti-arrow-down-left-circle"></i>
+            {% endif %}
+          </div>
+
+          <div class="flex-grow-1">
+            <div class="tx-title">
+              {% if tx.transaction_type == 'deposit' %}Deposit
+              {% elif tx.transaction_type == 'withdraw' %}Withdrawal
+              {% elif tx.transaction_type == 'transfer_sent' %}Sent to {{ tx.related_account_name }}
+              {% else %}Received from {{ tx.related_account_name }}
+              {% endif %}
+            </div>
+            <div class="tx-sub">
+              {% if tx.remark %}{{ tx.remark }}{% endif %}
+              {% if tx.related_account_number %}— Acc: {{ tx.related_account_number }}{% endif %}
+            </div>
+            <div class="tx-date">{{ tx.created_at|date:"d M Y, h:i A" }}</div>
+          </div>
+
+          <div class="text-end">
+            <div class="tx-amount {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'transfer_received' %}credit{% else %}debit{% endif %}">
+              {% if tx.transaction_type == 'deposit' or tx.transaction_type == 'transfer_received' %}+{% else %}−{% endif %}₹{{ tx.amount|floatformat:2 }}
+            </div>
+            <div class="tx-bal">Bal: ₹{{ tx.balance_after|floatformat:2 }}</div>
+          </div>
+
+        </div>
+        {% endfor %}
+
+      {% else %}
+        <div class="empty-state">
+          <i class="ti ti-inbox"></i>
+          No transactions found for this filter.
+        </div>
+      {% endif %}
+
+      <!-- Pagination -->
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="pagination-wrap">
+        <div class="page-info">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+          of {{ page_obj.paginator.count }} transactions
+        </div>
+        <div class="page-controls">
+          {% if page_obj.has_previous %}
+          <a href="?type={{ filter_type }}&page=1" class="pg-btn" title="First">
+            <i class="ti ti-chevrons-left"></i></a>
+          <a href="?type={{ filter_type }}&page={{ page_obj.previous_page_number }}" class="pg-btn">
+            <i class="ti ti-chevron-left"></i></a>
+          {% else %}
+          <span class="pg-btn disabled"><i class="ti ti-chevrons-left"></i></span>
+          <span class="pg-btn disabled"><i class="ti ti-chevron-left"></i></span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <span class="pg-btn active">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+              <a href="?type={{ filter_type }}&page={{ num }}" class="pg-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <a href="?type={{ filter_type }}&page={{ page_obj.next_page_number }}" class="pg-btn">
+            <i class="ti ti-chevron-right"></i></a>
+          <a href="?type={{ filter_type }}&page={{ page_obj.paginator.num_pages }}" class="pg-btn" title="Last">
+            <i class="ti ti-chevrons-right"></i></a>
+          {% else %}
+          <span class="pg-btn disabled"><i class="ti ti-chevron-right"></i></span>
+          <span class="pg-btn disabled"><i class="ti ti-chevrons-right"></i></span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /glass-card -->
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     DOWNLOAD STATEMENT MODAL
+══════════════════════════════════════ -->
+<div class="stmt-overlay" id="stmtOverlay">
+  <div class="stmt-modal">
+
+    <div class="stmt-modal-header">
+      <div class="stmt-modal-title">
+        <i class="ti ti-file-download"></i> Download Statement
+      </div>
+      <button class="stmt-close" id="closeStmtModal"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="stmt-modal-body">
+      <p class="stmt-desc">
+        Select a period to download your official Apex Bank account statement as a PDF.
+      </p>
+
+      <div class="stmt-period-grid">
+
+        <a href="{% url 'download_statement' %}?period=1m" class="stmt-period-card" id="dl-1m">
+          <div class="sp-icon"><i class="ti ti-calendar-month"></i></div>
+          <div class="sp-label">Last 1 Month</div>
+          <div class="sp-sub">Past 30 days</div>
+          <div class="sp-arrow"><i class="ti ti-download"></i></div>
+        </a>
+
+        <a href="{% url 'download_statement' %}?period=6m" class="stmt-period-card" id="dl-6m">
+          <div class="sp-icon"><i class="ti ti-calendar-stats"></i></div>
+          <div class="sp-label">Last 6 Months</div>
+          <div class="sp-sub">Past 180 days</div>
+          <div class="sp-arrow"><i class="ti ti-download"></i></div>
+        </a>
+
+        <a href="{% url 'download_statement' %}?period=1y" class="stmt-period-card" id="dl-1y">
+          <div class="sp-icon"><i class="ti ti-calendar-year"></i></div>
+          <div class="sp-label">Last 1 Year</div>
+          <div class="sp-sub">Past 365 days</div>
+          <div class="sp-arrow"><i class="ti ti-download"></i></div>
+        </a>
+
+      </div>
+
+      <div class="stmt-note">
+        <i class="ti ti-shield-check"></i>
+        Your statement is generated securely and downloaded directly to your device.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var overlay   = document.getElementById('stmtOverlay');
+    var openBtn   = document.getElementById('openStmtModal');
+    var closeBtn  = document.getElementById('closeStmtModal');
+
+    if (openBtn && overlay) {
+      openBtn.addEventListener('click', function () {
+        overlay.classList.add('open');
+      });
+    }
+    if (closeBtn && overlay) {
+      closeBtn.addEventListener('click', function () {
+        overlay.classList.remove('open');
+      });
+    }
+    if (overlay) {n 
+      // close when clicking the dark backdrop (outside the modal box)
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
+          overlay.classList.remove('open');
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}

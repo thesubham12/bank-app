@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Choose Account Type — Apex Bank{% endblock %}
+
+{% block content %}
+
+
+<div class="account-hero py-5">
+  <div class="container py-4">
+
+    <!-- Header -->
+    <div class="text-center mb-5">
+      <div class="section-badge">
+        <i class="ti ti-building-bank me-1"></i> Open an Account
+      </div>
+      <h1 class="section-title mb-3">
+        Choose Your <span>Account Type</span>
+      </h1>
+      <p class="section-sub mx-auto">
+        Select the account that best fits your financial goals. Each account comes with exclusive benefits tailored just for you.
+      </p>
+    </div>
+
+    <!-- Info strip -->
+    <div class="info-strip mb-5">
+      <div class="row g-3 text-center">
+        <div class="col-6 col-md-3">
+          <div class="strip-item justify-content-center">
+            <i class="ti ti-clock"></i>
+            <span>Open in 5 minutes</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="strip-item justify-content-center">
+            <i class="ti ti-shield-check"></i>
+            <span>DICGC Insured</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="strip-item justify-content-center">
+            <i class="ti ti-device-mobile"></i>
+            <span>Free Net Banking</span>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="strip-item justify-content-center">
+            <i class="ti ti-headset"></i>
+            <span>24/7 Support</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Cards -->
+    <div class="row g-4 mb-5">
+
+      <!-- 1. Savings -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="acc-card theme-blue" data-account="Savings Account" onclick="selectCard(this)">
+          <div class="selected-badge"><i class="ti ti-check" style="color:#fff;font-size:13px;"></i></div>
+          <div class="acc-icon-box"><i class="ti ti-piggy-bank"></i></div>
+          <div class="acc-title">Savings Account</div>
+          <div class="acc-desc">Park your money safely while earning steady interest. Perfect for individuals building financial habits.</div>
+          <div class="acc-features">
+            <span class="acc-pill">Zero Balance Option</span>
+            <span class="acc-pill">Free Debit Card</span>
+            <span class="acc-pill">UPI & Net Banking</span>
+          </div>
+          <div class="acc-rate">
+            <i class="ti ti-trending-up"></i>
+            Interest Rate: <strong>3.5% p.a.</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Current -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="acc-card theme-green" data-account="Current Account" onclick="selectCard(this)">
+          <div class="selected-badge"><i class="ti ti-check" style="color:#fff;font-size:13px;"></i></div>
+          <div class="acc-icon-box"><i class="ti ti-briefcase"></i></div>
+          <div class="acc-title">Current Account</div>
+          <div class="acc-desc">Designed for businesses and professionals who need unlimited transactions and overdraft facilities.</div>
+          <div class="acc-features">
+            <span class="acc-pill">Unlimited Transactions</span>
+            <span class="acc-pill">Overdraft Facility</span>
+            <span class="acc-pill">Business Tools</span>
+          </div>
+          <div class="acc-rate">
+            <i class="ti ti-trending-up"></i>
+            Min. Balance: <strong>₹10,000</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Fixed Deposit -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="acc-card theme-gold" data-account="Fixed Deposit (FD) Account" onclick="selectCard(this)">
+          <div class="selected-badge"><i class="ti ti-check" style="color:#fff;font-size:13px;"></i></div>
+          <div class="acc-icon-box"><i class="ti ti-lock"></i></div>
+          <div class="acc-title">Fixed Deposit (FD)</div>
+          <div class="acc-desc">Lock your savings for a fixed period and earn higher guaranteed returns. Ideal for risk-free wealth growth.</div>
+          <div class="acc-features">
+            <span class="acc-pill">High Returns</span>
+            <span class="acc-pill">Loan Against FD</span>
+            <span class="acc-pill">Auto Renewal</span>
+          </div>
+          <div class="acc-rate">
+            <i class="ti ti-trending-up"></i>
+            Interest Rate: <strong>Up to 7.5% p.a.</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Recurring Deposit -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="acc-card theme-purple" data-account="Recurring Deposit (RD) Account" onclick="selectCard(this)">
+          <div class="selected-badge"><i class="ti ti-check" style="color:#fff;font-size:13px;"></i></div>
+          <div class="acc-icon-box"><i class="ti ti-repeat"></i></div>
+          <div class="acc-title">Recurring Deposit (RD)</div>
+          <div class="acc-desc">Save a fixed amount every month and grow your money systematically. Great for salaried individuals.</div>
+          <div class="acc-features">
+            <span class="acc-pill">Monthly Deposits</span>
+            <span class="acc-pill">Flexible Tenure</span>
+            <span class="acc-pill">Premature Closure</span>
+          </div>
+          <div class="acc-rate">
+            <i class="ti ti-trending-up"></i>
+            Interest Rate: <strong>Up to 7.0% p.a.</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Salary -->
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="acc-card theme-rose" data-account="Salary Account" onclick="selectCard(this)">
+          <div class="selected-badge"><i class="ti ti-check" style="color:#fff;font-size:13px;"></i></div>
+          <div class="acc-icon-box"><i class="ti ti-cash"></i></div>
+          <div class="acc-title">Salary Account</div>
+          <div class="acc-desc">Receive your monthly salary directly with exclusive perks like free insurance, loans, and premium cards.</div>
+          <div class="acc-features">
+            <span class="acc-pill">Zero Balance</span>
+            <span class="acc-pill">Free Insurance</span>
+            <span class="acc-pill">Instant Loans</span>
+          </div>
+          <div class="acc-rate">
+            <i class="ti ti-trending-up"></i>
+            Interest Rate: <strong>3.5% p.a.</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compare card -->
+      <div class="col-12 col-md-6 col-lg-4 d-flex">
+        <div class="acc-card d-flex flex-column align-items-center justify-content-center text-center"
+             style="border-style:dashed; cursor:default;">
+          <i class="ti ti-chart-bar" style="font-size:40px;color:rgba(255,255,255,0.25);margin-bottom:14px;"></i>
+          <div class="acc-title" style="color:rgba(255,255,255,0.55);">Compare Accounts</div>
+          <p class="acc-desc" style="font-size:13px;">Not sure which to pick? View a detailed side-by-side comparison of all account types.</p>
+          <a href="#" class="btn btn-sm mt-2"
+             style="background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:50px;padding:8px 22px;font-size:13px;">
+            Compare Now
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CTA -->
+    <div class="text-center">
+      <div id="selected-label" class="mb-3">
+        ← Select an account type above
+      </div>
+      <button class="btn btn-open-account" id="proceed-btn" disabled onclick="proceedToOpen()">
+        <i class="ti ti-arrow-right me-2"></i>
+        Open This Account
+      </button>
+      <p class="mt-3" style="color:rgba(255,255,255,0.35);font-size:12px;">
+        By proceeding you agree to our Terms & Conditions and Privacy Policy.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Tabler Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+
+
+{% endblock %}

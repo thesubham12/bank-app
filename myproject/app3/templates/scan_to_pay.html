@@ -1,0 +1,390 @@
+
+
+Scan to pay · HTML
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Scan & Pay — Apex Bank{% endblock %}
+ 
+{% block content %}
+<style>
+  body { overflow: hidden; }
+  .scan-page {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+  }
+  .scan-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: rgba(0,0,0,.55);
+    position: relative;
+    z-index: 10;
+  }
+  .scan-top .icon-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 20px;
+    border: none; cursor: pointer;
+  }
+  .scan-top .bank-name {
+    color: #fff; font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .scan-top .bank-name img { height: 26px; }
+ 
+  .dropdown-3dot { position: relative; }
+  .dropdown-3dot-menu {
+    display: none;
+    position: absolute;
+    top: 46px; right: 0;
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    min-width: 160px;
+    overflow: hidden;
+    z-index: 20;
+  }
+  .dropdown-3dot-menu.show { display: block; }
+  .dropdown-3dot-menu a {
+    display: block;
+    padding: 12px 16px;
+    color: #fff;
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .dropdown-3dot-menu a:hover { background: rgba(255,255,255,.08); }
+ 
+  .scan-camera-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #scanVideo {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .scan-frame {
+    position: relative;
+    z-index: 5;
+    width: min(70vw, 280px);
+    height: min(70vw, 280px);
+    border-radius: 24px;
+    box-shadow: 0 0 0 2000px rgba(0,0,0,.5);
+  }
+  .scan-frame::before,
+  .scan-frame::after {
+    content: '';
+    position: absolute;
+    width: 36px; height: 36px;
+    border-color: #38bdf8;
+    border-style: solid;
+  }
+  .scan-frame::before {
+    top: -3px; left: -3px;
+    border-width: 4px 0 0 4px;
+    border-top-left-radius: 16px;
+  }
+  .scan-frame::after {
+    bottom: -3px; right: -3px;
+    border-width: 0 4px 4px 0;
+    border-bottom-right-radius: 16px;
+  }
+  .scan-frame .corner-tr {
+    position: absolute; top: -3px; right: -3px;
+    width: 36px; height: 36px;
+    border: solid #38bdf8;
+    border-width: 4px 4px 0 0;
+    border-top-right-radius: 16px;
+  }
+  .scan-frame .corner-bl {
+    position: absolute; bottom: -3px; left: -3px;
+    width: 36px; height: 36px;
+    border: solid #38bdf8;
+    border-width: 0 0 4px 4px;
+    border-bottom-left-radius: 16px;
+  }
+ 
+  .scan-hint {
+    position: absolute;
+    bottom: 130px;
+    left: 0; right: 0;
+    text-align: center;
+    color: rgba(255,255,255,.8);
+    font-size: 14px;
+    z-index: 6;
+  }
+ 
+  .scan-bottom {
+    padding: 20px 18px 30px;
+    background: rgba(0,0,0,.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+    position: relative;
+    z-index: 10;
+  }
+  .scan-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-size: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .scan-action .circle {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    transition: background .2s ease;
+  }
+  .scan-action .circle.active {
+    background: #fbbf24;
+    color: #000;
+  }
+  .scan-action:hover .circle { background: rgba(255,255,255,.22); }
+ 
+  #qrUploadInput { display: none; }
+ 
+  .scan-status {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 15;
+    text-align: center;
+    color: #fff;
+    display: none;
+  }
+  .scan-status.show { display: block; }
+  .scan-status .spinner-border { color: #38bdf8; }
+ 
+  .scan-error-toast {
+    position: absolute;
+    top: 90px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(220,53,69,.95);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    z-index: 20;
+    display: none;
+    white-space: nowrap;
+  }
+  .scan-error-toast.show { display: block; }
+</style>
+ 
+<div class="scan-page">
+ 
+  <!-- Top bar -->
+  <div class="scan-top">
+    <button class="icon-btn" onclick="window.location.href=window.profileUrl">
+      <i class="ti ti-x"></i>
+    </button>
+    <div class="bank-name">
+      <img src="{% static 'images/apex_bank_logo.svg' %}" alt="">
+      Apex Bank
+    </div>
+    <div class="dropdown-3dot">
+      <button class="icon-btn" id="dotsBtn">
+        <i class="ti ti-dots-vertical"></i>
+      </button>
+      <div class="dropdown-3dot-menu" id="dotsMenu">
+        <a href="{% url 'support' %}"><i class="ti ti-help-circle me-2"></i>Get Help</a>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Camera -->
+  <div class="scan-camera-wrap">
+    <video id="scanVideo" autoplay muted playsinline></video>
+    <canvas id="scanCanvas" style="display:none;"></canvas>
+ 
+    <div class="scan-frame">
+      <div class="corner-tr"></div>
+      <div class="corner-bl"></div>
+    </div>
+    <div class="scan-hint">Point your camera at a QR code</div>
+ 
+    <div class="scan-status" id="scanStatus">
+      <div class="spinner-border" role="status"></div>
+      <p style="margin-top:10px;font-size:13px;">Verifying account…</p>
+    </div>
+ 
+    <div class="scan-error-toast" id="scanErrorToast"></div>
+  </div>
+ 
+  <!-- Bottom actions -->
+  <div class="scan-bottom">
+    <button class="scan-action" id="torchBtn">
+      <div class="circle"><i class="ti ti-bolt"></i></div>
+      Torch
+    </button>
+    <button class="scan-action" onclick="document.getElementById('qrUploadInput').click()">
+      <div class="circle"><i class="ti ti-photo"></i></div>
+      Upload QR
+    </button>
+    <input type="file" id="qrUploadInput" accept="image/*">
+  </div>
+ 
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+(function () {
+  const OWN_ACCOUNT = "{{ own_account_number }}";
+  const CSRF = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+               '{{ csrf_token }}';
+ 
+  const video       = document.getElementById('scanVideo');
+  const canvas      = document.getElementById('scanCanvas');
+  const ctx         = canvas.getContext('2d');
+  const torchBtn    = document.getElementById('torchBtn');
+  const uploadInput = document.getElementById('qrUploadInput');
+  const statusEl    = document.getElementById('scanStatus');
+  const errorToast  = document.getElementById('scanErrorToast');
+  const dotsBtn     = document.getElementById('dotsBtn');
+  const dotsMenu    = document.getElementById('dotsMenu');
+ 
+  let stream = null;
+  let track = null;
+  let torchOn = false;
+  let scanning = true;
+  let animationId = null;
+ 
+  // 3-dot menu toggle
+  dotsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dotsMenu.classList.toggle('show');
+  });
+  document.addEventListener('click', () => dotsMenu.classList.remove('show'));
+ 
+  function showError(msg) {
+    errorToast.textContent = msg;
+    errorToast.classList.add('show');
+    setTimeout(() => errorToast.classList.remove('show'), 3000);
+  }
+ 
+  // Start camera
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(s => {
+      stream = s;
+      video.srcObject = stream;
+      track = stream.getVideoTracks()[0];
+ 
+      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+      if (!capabilities.torch) {
+        torchBtn.style.opacity = '0.4';
+        torchBtn.style.pointerEvents = 'none';
+      }
+ 
+      video.play();
+      requestAnimationFrame(tick);
+    })
+    .catch(() => {
+      showError('Camera access denied. Use "Upload QR" instead.');
+    });
+ 
+  torchBtn.addEventListener('click', () => {
+    if (!track) return;
+    torchOn = !torchOn;
+    track.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => {
+      showError('Torch not supported on this device.');
+      torchOn = !torchOn;
+    });
+    torchBtn.querySelector('.circle').classList.toggle('active', torchOn);
+  });
+ 
+  function tick() {
+    if (!scanning) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code && code.data) {
+        scanning = false;
+        handleScannedText(code.data);
+        return;
+      }
+    }
+    animationId = requestAnimationFrame(tick);
+  }
+ 
+  function handleScannedText(text) {
+    statusEl.classList.add('show');
+    const parts = text.split('|');
+    if (parts.length < 3 || parts[0] !== 'APEXBANK') {
+      showError('Not a valid Apex Bank QR code.');
+      statusEl.classList.remove('show');
+      scanning = true;
+      requestAnimationFrame(tick);
+      return;
+    }
+    const accountNumber = parts[1];
+
+    if (accountNumber === OWN_ACCOUNT) {
+      showError('You cannot transfer to your own account.');
+      statusEl.classList.remove('show');
+      scanning = true;
+      requestAnimationFrame(tick);
+      return;
+    }
+
+    stopCamera();
+    window.location.href = "{% url 'transfer' %}?receiver=" + encodeURIComponent(accountNumber);
+}
+ 
+  // Upload fallback — reuse existing scan_qr_transfer endpoint
+  uploadInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    statusEl.classList.add('show');
+ 
+    const formData = new FormData();
+    formData.append('qr_image', file);
+ 
+    fetch("{% url 'scan_qr_transfer' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+      body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+      statusEl.classList.remove('show');
+      if (res.ok) {
+        stopCamera();
+        window.location.href = "{% url 'transfer' %}?receiver=" + encodeURIComponent(res.account_number);
+      } else {
+        showError(res.error || 'Could not read QR code.');
+      }
+    })
+    .catch(() => {
+      statusEl.classList.remove('show');
+      showError('Something went wrong. Try again.');
+    });
+  });
+ 
+  window.addEventListener('beforeunload', stopCamera);
+})();
+</script>
+{% endblock %}
+ 

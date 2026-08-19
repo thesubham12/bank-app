@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}
+        Banking Management System
+        {% endblock %}
+    </title>
+
+    {% load static %}
+
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'media.css' %}">
+
+    <link rel="stylesheet" href="{% static 'style1.css' %}">
+    <link rel="stylesheet" href="{% static 'media1.css' %}">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+
+
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'about' %}">
+                <img src="{% static 'images/apex_bank_logo.svg' %}" alt="Apex Bank" height="44">
+                Apex Bank
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-auto mb-4 mb-2  mb-lg-0 nav-pills mb-3" id="pills-tab" role="tablist">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}"
+                            aria-current="page" href="{% url 'home' %}" id="pills-home-tab" data-toggle="pill">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                            href="{% url 'profile' %}" id="pills-profile-tab" data-toggle="pill">Profile</a>
+                    </li>
+                    <li class="nav-item" id="pills-about-tab">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}"
+                            href="{% url 'about' %}" id="pills-about-tab" data-toggle="pill">About</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false" aria-haspopup="true">
+                            Transactions
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">Check Balance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'transaction_history' %}">Download Statement</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <!-- ✅ CHANGED: open modal directly -->
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#depositModal">Deposit Balance</a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#withdrawModal">Withdraw Balance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'transfer' %}">Transfer Balance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'transaction_history' %}">Transaction History</a></li>
+                            <li><a class="dropdown-item" href="{% url 'support' %}">Customer Support</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item d-flex align-items-center">
+                        <button id="themeToggleBtn" class="icon-btn" style="background:rgba(0,51,102,0.08); border:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#003366; margin: 0 10px;" title="Toggle dark mode">
+                            <i class="ti ti-moon" id="themeToggleIcon"></i>
+                        </button>
+                    </li>
+
+                    <form class="form-inline my-5 my-lg-0 h-2" style="position: relative;" onsubmit="return false;">
+                        <div class="search-wrapper">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <input type="text" class="search-input" id="siteSearchInput" placeholder="Search transactions..." autocomplete="off">
+                        </div>
+                        <div id="searchResults" class="search-results-box" style="position: absolute; top: 48px; left: 0; right: 0; display: none; z-index: 1000; max-height: 300px; overflow-y: auto;"></div>
+                    </form>
+
+
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'support' %}active{% endif %}"
+                            aria-current="page" href="#">Customer Support</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}"
+                            href="#"><i class="ti ti-phone"></i> 1088 8988</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}"
+                            href="{% url 'register' %}">Register</a>
+                    </li>
+
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages Display -->
+    {% if messages %}
+    <div class="container-fluid p-0">
+        {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+            <strong>{{ message|safe }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% else %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show m-3" role="alert">
+            <strong>{{ message|safe }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <!-- Main Content -->
+<main>
+    {% block content %}
+
+
+    {% endblock %}
+</main>
+
+    <!-- Footer -->
+    {% if request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}
+
+        <!-- Simple Footer (Login / Register only) -->
+        <footer class="simple-footer">
+            <div class="container text-center">
+                <small>© 2026 Apex Bank. All Rights Reserved. &nbsp;|&nbsp;
+                    <a href="#">Privacy Policy</a> &nbsp;|&nbsp;
+                    <a href="#">Terms of Service</a>
+                </small>
+            </div>
+        </footer>
+
+    {% else %}
+
+        <!-- Full Footer (all other pages) -->
+        <footer class="footer-area">
+            <div class="footer-top">
+                <div class="container">
+                    <div class="row">
+
+                        <!-- Brand Column -->
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="footer-brand">
+                                <img src="{% static 'images/apex_bank_logo.svg' %}" alt="Apex Bank" height="48">
+                                <span>Apex Bank</span>
+                            </div>
+                            <p class="footer-desc">
+                                Your trusted partner for secure, smart, and seamless banking solutions.
+                                We are committed to your financial growth.
+                            </p>
+                            <div class="footer-socials">
+                                <a href="https://www.facebook.com"><i class="ti ti-brand-facebook"></i></a>
+                                <a href="https://twitter.com"><i class="ti ti-brand-twitter"></i></a>
+                                <a href="https://www.instagram.com"><i class="ti ti-brand-instagram"></i></a>
+                                <a href="https://www.linkedin.com"><i class="ti ti-brand-linkedin"></i></a>
+                            </div>
+                        </div>
+
+                        <!-- Quick Links -->
+                        <div class="col-lg-2 col-md-6 mb-4">
+                            <h6 class="footer-heading">Quick Links</h6>
+                            <ul class="footer-links">
+                                <li><a href="{% url 'home' %}">Home</a></li>
+                                <li><a href="{% url 'about' %}">About Us</a></li>
+                                <li><a href="{% url 'profile' %}">My Profile</a></li>
+                                <li><a href="{% url 'login' %}">Login</a></li>
+                                <li><a href="{% url 'register' %}">Create Account</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Services -->
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <h6 class="footer-heading">Our Services</h6>
+                            <ul class="footer-links">
+                                <li><a href="{% url 'profile' %}">Check Balance</a></li>
+                                <li><a href="#" data-bs-toggle="modal" data-bs-target="#depositModal">Deposit Money</a></li>
+                                <li><a href="#" data-bs-toggle="modal" data-bs-target="#withdrawModal">Withdraw Money</a></li>
+                                <li><a href="{% url 'transfer' %}">Transfer Funds</a></li>
+                                <li><a href="{% url 'transaction_history' %}">Download Statement</a></li>
+                                <li><a href="{% url 'support' %}">Customer Support</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <h6 class="footer-heading">Contact Us</h6>
+                            <ul class="footer-contact">
+                                <li>
+                                    <i class="ti ti-map-pin"></i>
+                                    <span>123 Bank Street, Finance City, IN 560001</span>
+                                </li>
+                                <li>
+                                    <i class="ti ti-phone"></i>
+                                    <span>+91 98765 43210</span>
+                                </li>
+                                <li>
+                                    <i class="ti ti-mail"></i>
+                                    <span>support@apexbank.com</span>
+                                </li>
+                                <li>
+                                    <i class="ti ti-clock"></i>
+                                    <span>Mon – Sat: 9:00 AM – 6:00 PM</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 text-center text-md-start">
+                            <small>© 2026 Apex Bank. All Rights Reserved.</small>
+                        </div>
+                        <div class="col-md-6 text-center text-md-end">
+                            <small>
+                                <a href="#">Privacy Policy</a> &nbsp;|&nbsp;
+                                <a href="#">Terms of Service</a> &nbsp;|&nbsp;
+                                <a href="#">Security</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    {% endif %}
+
+    <!-- ✅ ADDED: Deposit & Withdraw Modals for all pages------------------------------------ -->
+    {% if user.is_authenticated %}
+
+    <!-- Deposit Modal -->
+    <div class="modal fade" id="depositModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-arrow-down-circle me-2 text-info"></i>Deposit Funds</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{% url 'deposit' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Amount to Deposit (₹)</label>
+                            <input type="number" name="amount" class="form-control" min="1" step="0.01" placeholder="Enter amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">MPIN</label>
+                            <input type="password" name="mpin" class="form-control" maxlength="6" placeholder="Enter MPIN" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Deposit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div class="modal fade" id="withdrawModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-arrow-up-circle me-2 text-info"></i>Withdraw Funds</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{% url 'withdraw' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Amount to Withdraw (₹)</label>
+                            <input type="number" name="amount" class="form-control" min="1" step="0.01" placeholder="Enter amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">TPIN</label>
+                            <input type="password" name="tpin" class="form-control" maxlength="6" placeholder="Enter TPIN" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Withdraw</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Unavailable Modal -->
+    <div class="modal fade" id="serviceUnavailableModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center" style="background:#0c1a35; border:1px solid rgba(255,255,255,.12); border-radius:20px; color:#fff;">
+            <div class="modal-body py-5">
+                <div class="mb-3">
+                    <i class="ti ti-clock-hour-4" style="font-size: 46px; color: #38bdf8;"></i>
+                </div>
+                <h5 class="modal-title mb-2" style="color:#fff;">Service Currently Unavailable</h5>
+                <p style="color: rgba(255,255,255,.6); margin-bottom: 4px;" id="unavailableAccountType"></p>
+                <p style="color: rgba(255,255,255,.6); font-size: 14px;">
+                    This account type isn't available yet. We're working on bringing it to you soon —
+                    in the meantime, you can open a Savings Account.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pb-4" style="border-top: none;">
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Window variables MUST be set BEFORE main.js loads -->
+    <script>
+    window.transferUrl = "{% url 'transfer' %}";
+    window.profileUrl = "{% url 'profile' %}";
+    window.transactionHistoryUrl = "{% url 'transaction_history' %}";
+    window.supportUrl = "{% url 'support' %}";
+    </script>
+
+    <script src="{% static 'main.js' %}"></script>
+    <script src="{% static 'main2.js' %}"></script>
+    {% block scripts %}{% endblock %}
+
+</body>
+
+</html>
