@@ -27,11 +27,15 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-*&sg@6u@*0++fevt+2*q*9i_=6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+
 
 
 # Application definition
-
+ALLOWED_HOSTS = [
+    "13.50.241.188",
+    "localhost",
+    "127.0.0.1",
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
