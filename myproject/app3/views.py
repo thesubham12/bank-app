@@ -32,7 +32,12 @@ import io
 import re
 
 import json
-from pyzbar.pyzbar import decode as qr_decode
+
+try:
+    from pyzbar.pyzbar import decode as qr_decode
+except (ImportError, OSError):
+    qr_decode = None
+
 from PIL import Image
 from django.views.decorators.csrf import csrf_exempt
 
@@ -343,33 +348,58 @@ def transfer(request):
 #  TRANSFER using qr code
 # ─────────────────────────────
 @login_required
+
 def scan_qr_transfer(request):
     if request.method != "POST" or "qr_image" not in request.FILES:
-        return JsonResponse({"ok": False, "error": "No image uploaded."})
+        return JsonResponse({
+            "ok": False,
+            "error": "No image uploaded."
+        })
+
+    if qr_decode is None:
+        return JsonResponse({
+            "ok": False,
+            "error": "QR scanning is currently unavailable."
+        }, status=503)
 
     try:
         img = Image.open(request.FILES["qr_image"])
         decoded = qr_decode(img)
 
         if not decoded:
-            return JsonResponse({"ok": False, "error": "No QR code detected in image."})
+            return JsonResponse({
+                "ok": False,
+                "error": "No QR code detected in image."
+            })
 
         qr_text = decoded[0].data.decode("utf-8")
 
         # Expected format: APEXBANK|account_number|full_name|ifsc_code
         parts = qr_text.split("|")
+
         if len(parts) < 3 or parts[0] != "APEXBANK":
-            return JsonResponse({"ok": False, "error": "This is not a valid Apex Bank QR code."})
+            return JsonResponse({
+                "ok": False,
+                "error": "This is not a valid Apex Bank QR code."
+            })
 
         account_number = parts[1]
 
         try:
-            receiver = SavingsAccount.objects.get(account_number=account_number)
+            receiver = SavingsAccount.objects.get(
+                account_number=account_number
+            )
         except SavingsAccount.DoesNotExist:
-            return JsonResponse({"ok": False, "error": "Receiver account not found."})
+            return JsonResponse({
+                "ok": False,
+                "error": "Receiver account not found."
+            })
 
         if receiver.user == request.user:
-            return JsonResponse({"ok": False, "error": "You cannot transfer to your own account."})
+            return JsonResponse({
+                "ok": False,
+                "error": "You cannot transfer to your own account."
+            })
 
         return JsonResponse({
             "ok": True,
@@ -378,7 +408,11 @@ def scan_qr_transfer(request):
         })
 
     except Exception:
-        return JsonResponse({"ok": False, "error": "Could not read QR code. Try a clearer image."})
+        return JsonResponse({
+            "ok": False,
+            "error": "Could not read QR code. Try a clearer image."
+        })
+
 
 # ─────────────────────────────
 #  AJAX — verify receiver

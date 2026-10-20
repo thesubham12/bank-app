@@ -47,3 +47,9 @@ db.sqlite3
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Local Python virtual environment
+.venv/
+
+# User-uploaded media and profile photos
+myproject/media/
